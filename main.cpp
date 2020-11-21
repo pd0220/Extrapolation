@@ -221,25 +221,42 @@ int main(int argc, char **argv)
     Eigen::MatrixXd Z12Err = Eigen::MatrixXd::Zero(muBNum, PMatrix.cols() - 1);
     Eigen::MatrixXd Z31Err = Eigen::MatrixXd::Zero(muBNum, PMatrix.cols() - 1);
     Eigen::MatrixXd Z42Err = Eigen::MatrixXd::Zero(muBNum, PMatrix.cols() - 1);
+
+    // extra data 1
+    Eigen::VectorXd Diff31 = Eigen::VectorXd::Zero(muBNum);
+    Eigen::VectorXd Diff42 = Eigen::VectorXd::Zero(muBNum);
+    Eigen::MatrixXd Diff31Err = Eigen::MatrixXd::Zero(muBNum, PMatrix.cols() - 1);
+    Eigen::MatrixXd Diff42Err = Eigen::MatrixXd::Zero(muBNum, PMatrix.cols() - 1);
     for (int i = 0; i < muBNum; i++)
     {
         // results
         Z12(i) = ZFuncReal(muB(i), muS(i, 0), 1, 0, SectorNumbers, PMatrix.col(0)) / ZFuncReal(muB(i), muS(i, 0), 2, 0, SectorNumbers, PMatrix.col(0));
         Z31(i) = ZFuncReal(muB(i), muS(i, 0), 3, 0, SectorNumbers, PMatrix.col(0)) / ZFuncReal(muB(i), muS(i, 0), 1, 0, SectorNumbers, PMatrix.col(0));
         Z42(i) = ZFuncReal(muB(i), muS(i, 0), 4, 0, SectorNumbers, PMatrix.col(0)) / ZFuncReal(muB(i), muS(i, 0), 2, 0, SectorNumbers, PMatrix.col(0));
+
+        // extra 1 results
+        Diff31(i) = Z31(i) - Z31(0);
+        Diff42(i) = (Z42(i) - Z42(0)) / 3.;
+
         // errors from jackknife samples
         for (int iSample = 0; iSample < PMatrix.cols() - 1; iSample++)
         {
-            Z12Err(i, iSample) = ZFuncReal(muB(i), muS(i, iSample + 1), 1, 0, SectorNumbers, PMatrix.col(iSample)) / ZFuncReal(muB(i), muS(i, iSample + 1), 2, 0, SectorNumbers, PMatrix.col(iSample));
-            Z31Err(i, iSample) = ZFuncReal(muB(i), muS(i, iSample + 1), 3, 0, SectorNumbers, PMatrix.col(iSample)) / ZFuncReal(muB(i), muS(i, iSample + 1), 1, 0, SectorNumbers, PMatrix.col(iSample));
-            Z42Err(i, iSample) = ZFuncReal(muB(i), muS(i, iSample + 1), 4, 0, SectorNumbers, PMatrix.col(iSample)) / ZFuncReal(muB(i), muS(i, iSample + 1), 2, 0, SectorNumbers, PMatrix.col(iSample));
+            Z12Err(i, iSample) = ZFuncReal(muB(i), muS(i, iSample + 1), 1, 0, SectorNumbers, PMatrix.col(iSample + 1)) / ZFuncReal(muB(i), muS(i, iSample + 1), 2, 0, SectorNumbers, PMatrix.col(iSample + 1));
+            Z31Err(i, iSample) = ZFuncReal(muB(i), muS(i, iSample + 1), 3, 0, SectorNumbers, PMatrix.col(iSample + 1)) / ZFuncReal(muB(i), muS(i, iSample + 1), 1, 0, SectorNumbers, PMatrix.col(iSample + 1));
+            Z42Err(i, iSample) = ZFuncReal(muB(i), muS(i, iSample + 1), 4, 0, SectorNumbers, PMatrix.col(iSample + 1)) / ZFuncReal(muB(i), muS(i, iSample + 1), 2, 0, SectorNumbers, PMatrix.col(iSample + 1));
+
+            // extra 1 results
+            Diff31Err(i, iSample) = Z31Err(i, iSample) - Z31Err(0, iSample);
+            Diff42Err(i, iSample) = (Z42Err(i, iSample) - Z42Err(0, iSample)) / 3.;
         }
 
         // write to screen
         std::cout << muB(i) << " "
-                  << muS.col(0)(i) << " " << std::sqrt(JCKVariance(muS.row(i).segment(1, PMatrix.cols() - 1))) << " "
-                  << Z12(i) << " " << std::sqrt(JCKVariance(Z12Err.row(i))) << " "
-                  << Z31(i) << " " << std::sqrt(JCKVariance(Z31Err.row(i))) << " "
-                  << Z42(i) << " " << std::sqrt(JCKVariance(Z42Err.row(i))) << std::endl;
+                  //<< muS.col(0)(i) << " " << std::sqrt(JCKVariance(muS.row(i).segment(1, PMatrix.cols() - 1))) << " "
+                  //<< Z12(i) << " " << std::sqrt(JCKVariance(Z12Err.row(i))) << " "
+                  //<< Z31(i) << " " << std::sqrt(JCKVariance(Z31Err.row(i))) << " "
+                  //<< Z42(i) << " " << std::sqrt(JCKVariance(Z42Err.row(i))) << std::endl;
+                  << Diff31(i) << " " << std::sqrt(JCKVariance(Z31Err.row(i))) << " "
+                  << Diff42(i) << " " << std::sqrt(JCKVariance(Z42Err.row(i))) << std::endl;
     }
 }
